@@ -1,110 +1,74 @@
+--0
 use AdventureWorksLT2019
+select * from SalesLT.Product
 
---1
-create function fn_GetAllCustomers()
-returns table as
-return (select * from SalesLT.Customer)
+-- 1
+select count(*) as [Total Customers]
+from SalesLT.Customer
 
-select * from fn_GetAllCustomers()
+-- 2
+select count_big(*) as [Total Orders]
+from SalesLT.SalesOrderHeader
 
---2
-create function fn_GetCustomerByID(@CustomerID int)
-returns table as
-return (select FirstName, LastName
-        from SalesLT.Customer
-        where CustomerID = @CustomerID)
+-- 3
+select max(TotalDue) as [Order]
+from SalesLT.SalesOrderHeader
 
-select * from fn_GetCustomerByID(1)
+-- 4
+select min(TotalDue) as [Order]
+from SalesLT.SalesOrderHeader
 
---3
-create function fn_GetOrdersByCustomer(@CustomerID int)
-returns table as
-return (select * from SalesLT.SalesOrderHeader
-        where CustomerID = @CustomerID)
+-- 5
+select sum(TotalDue) as [Total Sum]
+from SalesLT.SalesOrderHeader
 
-select * from fn_GetOrdersByCustomer(29847)
+-- 6
+select count(*) as [100] from SalesLT.Product
+where ListPrice > 100
 
---4
-
-create function fn_GetProductsByPrice(@MinPrice money, @MaxPrice money)
-returns table as
-return (select * from SalesLT.Product
-        where ListPrice between @MinPrice and @MaxPrice)
-
-select * from fn_GetProductsByPrice(100, 500)
-
---5
-create function fn_GetTopExpensiveProducts()
-returns table as
-return (select top 10 * from SalesLT.Product
-        order by ListPrice desc)
-
-select * from fn_GetTopExpensiveProducts()
-
---6
-create function fn_GetCustomerFullInfo(@CustomerID int)
-returns @Table table (FullName nvarchar(50), Email nvarchar(50), Phone nvarchar(25))
-as begin
-insert into @Table
-select FirstName + ' ' + LastName, EmailAddress, Phone
-from SalesLT.Customer where CustomerID = @CustomerID
-return
-end
-
-select * from dbo.fn_GetCustomerFullInfo(1)
-
---7
-create function fn_GetCustomerOrderSummary_MSTVF(@CustomerID int)
-returns @Table Table (OrderCount int, TotalAmount money)
-as begin
-    insert into @Table
-    select count(SalesOrderID), sum(TotalDue)
-    from SalesLT.SalesOrderHeader where CustomerID = @CustomerID
-    return
-end
-
-select * from dbo.fn_GetCustomerOrderSummary_MSTVF(29847)
-
---8
-create function fn_GetProductPriceCategory_MSTVF()
-returns @Table Table (Name nvarchar(50), ListPrice money, Klass nvarchar(20))
-as begin
-insert into @Table
-select Name, ListPrice,
-case when ListPrice > 1000 then 'Kallis'
-       when ListPrice >= 100 then 'Keskmine'
-       else 'Odav' end
+-- 7
+select max(ListPrice) as [1000]
 from SalesLT.Product
-    return
-end
+where ListPrice < 1000
 
-select * from dbo.fn_GetProductPriceCategory_MSTVF()
+-- 8
+select min(ListPrice) as [Chiapest Product]
+from SalesLT.Product
+where ListPrice > 0
 
---9
-create function fn_GetCustomersWithOrders_MSTVF()
-returns @Table Table (CustomerID int, FirstName nvarchar(50), LastName nvarchar(50))
-as begin
-    insert into @Table
-    select c.CustomerID, c.FirstName, c.LastName
-    from SalesLT.Customer c
-    where exists (select 1 from SalesLT.SalesOrderHeader where CustomerID = c.CustomerID)
-    return
-end
+-- 9
 
-select * from dbo.fn_GetCustomersWithOrders_MSTVF()
+select sum(ListPrice) as [Total Price]
+from SalesLT.Product
+where Color is not null
 
---10
-create function fn_GetTopCustomersBySpending_MSTVF()
-returns @Table table (FullName nvarchar(50), TotalSpent money)
-as begin 
-    insert into @Table
-select top 5 c.FirstName + ' ' + c.LastName, sum(h.TotalDue)
-    from SalesLT.Customer c
-    join SalesLT.SalesOrderHeader h on c.CustomerID = h.CustomerID
-    group by c.FirstName, c.LastName
-    order by sum(h.TotalDue) desc
-    return
-end
+-- 10
+select count(*) as [2010] from SalesLT.Customer
+where ModifiedDate > '2010-01-01'
 
-select * from dbo.fn_GetTopCustomersBySpending_MSTVF()
+-- 11
+select min(ModifiedDate) as [Before 2009] from SalesLT.SalesOrderDetail
+where ModifiedDate < '2009-01-01'
 
+-- 12
+select CustomerID, sum(TotalDue) as [Total Orders Sum] from SalesLT.SalesOrderHeader
+group by CustomerID
+order by CustomerID
+
+-- 13
+select Customer.CustomerID, Customer.FirstName, Customer.LastName,
+count(SalesOrderHeader.SalesOrderID) as [Total Orders]
+    from SalesLT.Customer
+join SalesLT.SalesOrderHeader on Customer.CustomerID = SalesOrderHeader.CustomerID
+group by Customer.CustomerID, Customer.FirstName, Customer.LastName
+order by Customer.CustomerID
+
+
+-- 15
+select Customer.CustomerID, Customer.FirstName, Customer.LastName,
+sum(SalesOrderHeader.TotalDue) as [Total Sum]
+    from SalesLT.Customer
+join SalesLT.SalesOrderHeader on Customer.CustomerID = SalesOrderHeader.CustomerID
+group by Customer.CustomerID, Customer.FirstName, Customer.LastName
+having sum(SalesOrderHeader.TotalDue) > 10000
+order by Customer.CustomerID
