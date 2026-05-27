@@ -2027,71 +2027,72 @@ join Employee
 on Department.Id = Employee.DepartmentId
 order by DepartmentName
 
+--- rida 1993
 --- tund 15
+--- 14.05.26
 
 --- uuendamine CTE-s
 
--- lihtne CTE
+--lihtne CTE
 with Employees_Name_Gender
 as
 (
 	select Id, Name, Gender from Employee
 )
 select * from Employees_Name_Gender
----Kasutame JOIN-i CTE tegemiseks
-with EmployeesByDeparment
+
+---kasutame JOIN-i CTE tegemiseks
+with EmployeesByDepartment
 as
 (
 	select Employee.Id, Employee.Name, Department.DepartmentName
 	from Employee
 	join Department
-	on Employees.DepartmentId = Department.Id
+	on Employee.DepartmentId = Department.Id
 )
 select * from EmployeesByDepartment
---need muudame andmeid CTE-s
+
+--n[[d muudame andmeid CTE-s
 with EmployeesByDepartment
 as
 (
-	select Employee.Id, Employee.Name, Gender,  DepartmentName
+	select Employee.Id, Employee.Name, Gender, DepartmentName
 	from Employee
 	join Department
-	on Employee.DepartmentId = Department.Id
+	on Department.Id = Employee.DepartmentId
 )
 update EmployeesByDepartment set Gender = 'Male' where Id = 1
 
 -- kasutage eelmist CTE andmete muutmiseks,
--- aga seekord muutke Id 1 töötaja Gender female peale ja 
--- DeparmentName Payroll peale 
-
+-- aga seekord muutke Id 1 t;;taja Gender female peale ja 
+-- DepartmentName Payroll peale
 with EmployeesByDepartment
 as
 (
-	select Employee.Id, Employee.Name, Gender, Department.DepartmentName
+	select Employee.Id, Employee.Name, Gender, DepartmentName
 	from Employee
 	join Department
-	on Employee.DepartmentId = Department.Id
+	on Department.Id = Employee.DepartmentId
 )
 update EmployeesByDepartment set Gender = 'Female', DepartmentName = 'Payroll' 
-where Id = 1;
---ei lubamitmes tabelis korraga andmeidmuuta, kui on tegemist CTE-ga
+where Id = 1
+--ei luba mitmes tabelis korraga andmeid muuta, kui on tegemist CTE-ga
 
 --- kokkuvõte CTE-st
 -- 1. kui CTE baseerub ühel tabelil, siis uuendus töötab
 -- 2. kui CTE baseerub mitmel tabelil, siis tuleb veateade
--- 3. kui CTE baseerub mitmel tabelil ja tahame muuta ainult ühte tabelit,
+-- 3. kui CTE baseerub mitmel tabelil ja tahame muuta ainult ühte tabelit, 
 -- siis uuendus saab tehtud
 
 -- korduv CTE
 --- CTE, mis iseendale viitab, kutsutakse korduvaks CTE-ks
 --- kui tahad andmeid näidata hierarhiliselt
-
 Create Table Employee
 (
-	EmployeeId int Primary key,
-	Name nvarchar(20),
-	ManagerId int
-);
-select * from Employee
+  EmployeeId int Primary key,
+  Name nvarchar(20),
+  ManagerId int
+)
 
 select * from Employee
 insert into Employee values (1, 'Tom', 2)
@@ -2111,21 +2112,22 @@ from dbo.Employee Emp
 left join Employee Manager
 on Emp.ManagerId = Manager.EmployeeId
 
--- peab samasuguse tulemuse saavutama, aga kasutate CTE-d
-
+--peab samasuguse tulemsue saavutama, aga kasutate CTE-d
+--seal sees kasutab joini koos union all
 with EmployeeCTE(Id, Name, ManagerId, [Level])
 as
 (
-    select Employee.EmployeeId, Employee.Name, Employee.ManagerId, 1
-    from Employee
-    where ManagerId is null
+	select Employee.EmployeeId, Employee.Name, Employee.ManagerId, 1
+	from Employee
+	where ManagerId is null
 
-    union all
+	union all
 
-    select Employee.EmployeeId, Employee.Name, Employee.ManagerId,
-    EmployeeCTE.[Level] + 1
-    from Employee
-    join EmployeeCTE on Employee.ManagerId = EmployeeCTE.Id
+	select Employee.EmployeeId, Employee.Name, Employee.ManagerId, 
+	EmployeeCTE.[Level] + 1
+	from Employee
+	join EmployeeCTE 
+	on Employee.ManagerId = EmployeeCTE.Id
 )
 select EmpCTE.Name as Employee,
 isnull(MgrCTE.Name, 'Super Boss') as [Manager Name],
@@ -2135,37 +2137,40 @@ left join EmployeeCTE MgrCTE
 on EmpCTE.ManagerId = MgrCTE.Id
 
 ---PIVOT
---mis on PIVOT ?
+--mis on PIVOT?
 --PIVOT on SQL-i operatsioon, mis võimaldab teisendada ridu veergudeks
-create table Sales
-(
+ create table Sales
+ (
 	SalesAgent nvarchar(20),
 	SalesCountry nvarchar(20),
 	SalesAmount int
-)
+ )
 
-select * from Sales
+ select * from Sales
 
-insert into Sales values ('Tom', 'UK', 200)
-insert into Sales values ('John', 'US', 180)
-insert into Sales values ('John', 'UK', 260)
-insert into Sales values ('David', 'India', 450)
-insert into Sales values ('Tom', 'India', 350)
-insert into Sales values ('David', 'US', 200)
-insert into Sales values ('Tom', 'US', 130)
-insert into Sales values ('John', 'India', 540)
-insert into Sales values ('John', 'UK', 120)
-insert into Sales values ('David', 'UK', 220)
-insert into Sales values ('John', 'UK', 420)
-insert into Sales values ('David', 'US', 320)
-insert into Sales values ('Tom', 'US', 340)
-insert into Sales values ('Tom', 'UK', 660)
-insert into Sales values ('John', 'India', 430)
-insert into Sales values ('David', 'India', 230)
-insert into Sales values ('David', 'India', 280)
-insert into Sales values ('Tom', 'UK', 480)
-insert into Sales values ('John', 'UK', 360)
-insert into Sales values ('David', 'UK', 140)
+ insert into Sales values('Tom', 'UK', 200)
+insert into Sales values('John', 'US', 180)
+insert into Sales values('John', 'UK', 260)
+insert into Sales values('David', 'India', 450)
+insert into Sales values('Tom', 'India', 350)
+
+insert into Sales values('David', 'US', 200)
+insert into Sales values('Tom', 'US', 130)
+insert into Sales values('John', 'India', 540)
+insert into Sales values('John', 'UK', 120)
+insert into Sales values('David', 'UK', 220)
+
+insert into Sales values('John', 'UK', 420)
+insert into Sales values('David', 'US', 320)
+insert into Sales values('Tom', 'US', 340)
+insert into Sales values('Tom', 'UK', 660)
+insert into Sales values('John', 'India', 430)
+
+insert into Sales values('David', 'India', 230)
+insert into Sales values('David', 'India', 280)
+insert into Sales values('Tom', 'UK', 480)
+insert into Sales values('John', 'UK', 360)
+insert into Sales values('David', 'UK', 140)
 
 ----
 select SalesCountry, SalesAgent, sum(SalesAmount) as TotalSales
@@ -2174,16 +2179,16 @@ group by SalesCountry, SalesAgent
 order by SalesCountry, SalesAgent
 
 --- kasuta pivotit, et saada sama tulemus nagu ülemises päringus
-
 select SalesAgent, India, US, UK
 from Sales
 pivot
 (
-    sum(SalesAmount) for SalesCountry in (India, US, UK)
-) as AgentPivot;
+	sum(SalesAmount) for SalesCountry in (India, US, UK)
+)
+as PivotTable
 
 --- päring muudab unikaalsete veergude väärtust (India, US ja UK) SalesCountry veerus
---- omaette veergudeks koos veergude SalesAmount liitmisega.
+--- omaette veergudeks koos veergude SalesAmount liitmisega. 
 
 create table SalesWithId
 (
@@ -2192,36 +2197,39 @@ SalesAgent nvarchar(20),
 SalesCountry nvarchar(20),
 SalesAmount int
 )
+
 insert into SalesWithId values(1, 'Tom', 'UK', 200)
 insert into SalesWithId values(2, 'John', 'US', 180)
 insert into SalesWithId values(3, 'John', 'UK', 260)
 insert into SalesWithId values(4, 'David', 'India', 450)
 insert into SalesWithId values(5, 'Tom', 'India', 350)
+
 insert into SalesWithId values(6, 'David', 'US', 200)
 insert into SalesWithId values(7, 'Tom', 'US', 130)
 insert into SalesWithId values(8, 'John', 'India', 540)
 insert into SalesWithId values(9, 'John', 'UK', 120)
 insert into SalesWithId values(10, 'David', 'UK', 220)
+
 insert into SalesWithId values(11, 'John', 'UK', 420)
 insert into SalesWithId values(12, 'David', 'US', 320)
 insert into SalesWithId values(13, 'Tom', 'US', 340)
 insert into SalesWithId values(14, 'Tom', 'UK', 660)
 insert into SalesWithId values(15, 'John', 'India', 430)
+
 insert into SalesWithId values(16, 'David', 'India', 230)
 insert into SalesWithId values(17, 'David', 'India', 280)
 insert into SalesWithId values(18, 'Tom', 'UK', 480)
 insert into SalesWithId values(19, 'John', 'UK', 360)
 insert into SalesWithId values(20, 'David', 'UK', 140)
 
---tehke uuesti pivot, aga kasutage SalesWithId
+--tehke uuesti pivot, aga kasutage SalesWithId tabelit
 select SalesAgent, India, US, UK
 from SalesWithId
 pivot
 (
-    sum(SalesAmount) for SalesCountry in (India, US, UK)
+	sum(SalesAmount) for SalesCountry in (India, US, UK)
 )
 as PivotTable
-
 --- põhjuseks on Id veeru olemasolu SalesWithId, mida võetakse arvesse
 --- pööramise ja grupeerimise järgi
 
@@ -2235,7 +2243,7 @@ pivot
 (
 	sum(SalesAmount) for SalesCountry in (India, US, UK)
 )
-as PivotTable;
+as PivotTable
 
 --transactionid
 -- transaction jälgib järgmisi samme:
@@ -2245,50 +2253,49 @@ as PivotTable;
 
 create table MailingAddress
 (
-    Id int not null primary key,
-    EmployeeNumber int,
-    HouseNumber nvarchar(10),
-    StreetAddress nvarchar(50),
-    City nvarchar(50),
-    PostalCode nvarchar(20)
+	Id int not null primary key,
+	EmployeeNumber int,
+	HouseNumber nvarchar(10),
+	StreetAddress nvarchar(50),
+	City nvarchar(50),
+	PostalCode nvarchar(20)
 )
 
 insert into MailingAddress
-values (1, 101, '#10', 'King Street', 'Londoon', 'CR27W')
-
+values (1, 101, '#10', 'King Street', 'Londoon', 'CR27DW')
 
 
 create table PhysicalAddress
 (
-    Id int not null primary key,
-    EmployeeNumber int,
-    HouseNumber nvarchar(10),
-    StreetAddress nvarchar(50),
-    City nvarchar(50),
-    PostalCode nvarchar(20)
+	Id int not null primary key,
+	EmployeeNumber int,
+	HouseNumber nvarchar(10),
+	StreetAddress nvarchar(50),
+	City nvarchar(50),
+	PostalCode nvarchar(20)
 )
 
 insert into PhysicalAddress
-values (1, 101, '#10', 'King Street', 'Landoon', 'CR27DW')
+values (1, 101, '#10', 'King Street', 'Londoon', 'CR27DW')
 
 create proc spUpdateAddress
 as begin
-    begin try
-        begin transaction
-            update MailingAddress set City = 'LONDON'
-            where MailingAddress.Id = 1 and EmployeeNumber = 101
+	begin try
+		begin transaction
+			update MailingAddress set City = 'LONDON'
+			where MailingAddress.Id = 1 and EmployeeNumber = 101
 
-            update PhysicalAddress set City = 'LONDON'
-            where PhysicalAddress.Id = 1 and EmployeeNumber = 101
-        commit transaction
-    end try
-    begin catch
-        rollback tran
-    end catch
+			update PhysicalAddress set City = 'LONDON'
+			where PhysicalAddress.Id = 1 and EmployeeNumber = 101
+		commit transaction
+	end try
+	begin catch
+		rollback tran
+	end catch
 end
 
 --käivitame spUpdateAddress stored procedure-i
-exec spUpdateAddress
+spUpdateAddress
 
 select * from MailingAddress
 select * from PhysicalAddress
@@ -2304,29 +2311,39 @@ select * from PhysicalAddress
 -- I - isolated e isoleeritus
 -- D - durable e vastupidav
 
---- Atomic - kõik tehingud transactionis on kas edukalt täidetud või need
--- lükatakse tagasi. Nt, mõlemad käsud peaksid alati õnnestuma. Andmebaas
+--- Atomic - kõik tehingud transactionis on kas edukalt täidetud või need 
+-- lükatakse tagasi. Nt, mõlemad käsud peaksid alati õnnesutma. Andmebaas 
 -- teeb sellisel juhul: võtab esimese update tagasi ja veeretab selle algasendisse
 -- e taastab algsed andmed
 
---- Consistent - kõik transactioni puudutavad andmed jäetakse loogiliselt
--- järjepidevasse olekusse. Nt, kui laos saadaval olevaid esemete hulka
+--- Consistent - kõik transactioni puudutavad andmed jäetakse loogiliselt 
+-- järjepidevasse olekusse. Nt, kui laos saadaval olevaid esemete hulka 
 -- vähendatakse, siis tabelis peab olema vastav kanne. Inventuur ei saa
 -- lihtsalt kaduda
 
 --- Isolated - transaction peab andmeid mõjutama, sekkumata teistesse
--- samaaegsetesse transactionitesse. See takistab andmete muutmist, mis
--- põhinevad sidumata tabelitel. Nt, muudatused kirjas, mis hiljem tagasi
--- muudetakse. Enamik DB-d kasutab tehingute isoleerimise säilitamiseks
+-- samaaegsetesse transactionitesse. See takistab andmete muutmist, mis 
+-- põhinevad sidumata tabelitel. Nt, muudatused kirjas, mis hiljem tagasi 
+-- muudetakse. Enamik DB-d kasutab tehingute isoleerimise säilitamiseks 
 -- lukustamist
 
 --- Durable - kui muudatus on tehtud, siis see on püsiv. Kui süsteemiviga või
--- voolukatkestus ilmneb enne käskude komplekti valmimist, siis tühistatakse need
--- käsud ja andmed taastatakse algsesse olekusse. Taastamine toimub peale
+-- voolukatkestus ilmneb enne käskude komplekti valmimist, siis tühistatkse need 
+-- käsud ja andmed taastakse algsesse olekusse. Taastamine toimub peale 
 -- süsteemi taaskäivitamist.
 
 --subqueries e alamkäsud
 --alamkäsud on SQL-i käsud, mis on pesastatud teise SQL-i käsu sisse
+
+truncate table Product
+truncate table ProductSales
+
+create table Product
+(
+Id int identity primary key,
+Name nvarchar(50),
+Description nvarchar(250)
+)
 
 create table ProductSales
 (
@@ -2335,3 +2352,245 @@ ProductId int foreign key references Product(Id),
 UnitPrice int,
 QuantitySold int
 )
+
+insert into Product values (1, 'TV', '52 inch black color LCD TV')
+insert into Product values (2, 'Laptop', 'Very thin black color laptop')
+insert into Product values (3, 'Desktop', 'HP high performance desktop')
+
+
+--- rida 2387
+--- tund 16
+--- 20.05.26
+
+insert into ProductSales values(3, 450, 5)
+insert into ProductSales values(2, 250, 7)
+insert into ProductSales values(3, 450, 4)
+insert into ProductSales values(3, 450, 9)
+
+select * from Product
+select * from ProductSales
+
+--kirjutame päringu, mis annab infot müümata toodetest
+select Id, Name, Description
+from Product
+where Id not in (select ProductId from ProductSales)
+--sulgude sees on subquery, mis tagastab kõik ProductId-d ProductSales tabelist
+
+-- enamus juhtudel saab subquery-t asendada JOIN-iga
+--teha päring join-iga, et saada müümata toodete infot (left join)
+select Product.Id, Product.Name, Description
+from Product
+left join ProductSales
+on Product.Id = ProductSales.ProductId
+where ProductSales.ProductId is null
+
+--teeme subquery, kus kasutatakse selecti
+select Name, 
+(select sum(QuantitySold) from ProductSales where ProductId = Product.Id) as
+[Total Quantity]
+from Product
+order by Name
+
+-- sama tulemus, aga join-iga
+select Name, sum(QuantitySold) as [Total Quantity]
+from Product 
+left join ProductSales
+on Product.Id = ProductSales.ProductId
+group by Name
+order by Name
+
+-- subqueryt saab subquery sisse panna
+-- subquery on alati sulgudes ja neid nimetatakse sisemisteks päringuteks
+
+--rohkete andmetega testimise tabel
+
+truncate table Product
+truncate table ProductSales
+
+select * from Product
+select * from ProductSales
+
+
+create table Product
+(
+Id int identity primary key,
+Name nvarchar(50),
+Description nvarchar(250)
+)
+
+create table ProductSales
+(
+Id int primary key identity,
+ProductId int foreign key references Product(Id),
+UnitPrice int,
+QuantitySold int
+)
+
+
+--sisestame näidisandmed Product tabelisse
+declare @Id int
+set @Id = 1
+while(@Id <= 3000000)
+begin
+	insert into Product values('Product - ' + cast(@Id as nvarchar(20)),
+	'Product - ' + cast(@Id as nvarchar(20)) + ' Description')
+
+	print @Id
+	set @Id = @Id + 1
+end
+
+declare @RandomProductId int
+declare @RandomUnitPrice int
+declare @RandomQuantitySold int
+
+-- ProductId
+declare @LowerLimitForProductId int
+declare @UpperLimitForProductId int
+
+set @LowerLimitForProductId = 1
+set @UpperLimitForProductId = 100000
+
+--UnitPrice
+declare @LowerLimitForUnitPrice int
+declare @UpperLimitForUnitPrice int
+
+set @LowerLimitForUnitPrice = 1
+set @UpperLimitForUnitPrice = 100
+
+--QuantitySold
+declare @LowerLimitForQuantitySold int
+declare @UpperLimitForQuantitySold int
+
+set @LowerLimitForQuantitySold = 1
+set @UpperLimitForQuantitySold = 10
+
+declare @Counter int
+set @Counter = 1
+
+while(@Counter <= 4500000)
+begin
+	select @RandomProductId = round(((@UpperLimitForProductId -
+	@LowerLimitForProductId) * RAND() + @LowerLimitForProductId), 0)
+
+	select @RandomUnitPrice = round(((@UpperLimitForUnitPrice -
+	@LowerLimitForUnitPrice) * RAND() + @LowerLimitForUnitPrice), 0)
+
+	select @RandomQuantitySold = round(((@UpperLimitForQuantitySold -
+	@LowerLimitForQuantitySold) * RAND() + @LowerLimitForQuantitySold), 0)
+
+	insert into ProductSales
+	values(@RandomProductId, @RandomUnitPrice, @RandomQuantitySold)
+
+	print @Counter
+	set @Counter = @Counter + 1
+end
+
+select * from Product
+select * from ProductSales
+
+--- tund 17
+--- rida 2507
+--- 27.05.26
+
+-- võrdleme subquerit ja JOIN-i
+select Id, Name, Description
+from Product
+where Id in
+(
+select Product.Id from ProductSales
+)
+-- 3 milj rida 11 sek
+
+--teeme cache puhtaks, et uut päringut ei oleks kuskile vahemällu salvestatud
+checkpoint;
+go
+dbcc DROPCLEANBUFFERS; ---puhastab päringu cache-i
+go
+dbcc FREEPROCCACHE; --puhastab täitva planeeritud cache-i
+go
+
+--- teeme sama tabeli peale inner join päringu
+
+select Product.Id, Name, Description
+from Product
+inner join ProductSales 
+on Product.Id = ProductSales.ProductId
+-- 285 tuhat rida 1 sekundiga 
+-- teeme cache  puhtaks
+
+select Id, Name, Description
+from Product
+where not exists
+(
+select * from ProductSales where ProductId = Product.Id
+)
+--- 2,9 miljonit rida 12 sekundiga
+-- vahemalu puhtaks teha
+--kasutage left join-i ProductId is null
+
+select Product.Id, Name, Description
+from Product
+left join ProductSales
+on Product.Id = ProductSales.ProductId
+where Product.Id is null
+
+--12 sek 2,9 miljonit rida
+
+---- CURSOR-d
+
+--- relatsiooniliste DB-de haldussüsteemid saavad väga hästi hakkama
+--- SETS-ga. SETS lubab mitut päringut kombineerida üheks tulemuseks.
+--- Sinna alla käivad UNION, INTERSECT ja EXCEPT.
+
+update ProductSales set UnitPrice = 50
+where ProductSales.ProductId = 101
+
+--- kui on vaja rea kaupa andmeid töödelda, siis kõige parem oleks kasutada
+--- Cursoreid. Samas on need jõudlusele halvad ja võimalusel vältida.
+--- Soovitav oleks kasutada JOIN-i.
+
+-- Cursorid jagunevad omakorda neljaks:
+-- 1. Forward-Only e edasi-ainult
+-- 2. Static e staatilised
+-- 3. Keyset e võtmele seadistatud
+-- 4. Dynamic e dünaamiline
+
+-- Cursori näide:
+if the ProductName = 'Product - 55', set UnitPrice to 55
+
+--- nüüd algab õige cursor
+--------------------------
+declare @ProductId int
+-- deklareerime cursori
+declare ProductIdCursor cursor for
+select ProductId from ProductSales
+-- open avaldusega täidab select avaldust
+-- ja sisestab tulemuse
+open ProductIdCursor
+
+fetch next from ProductIdCursor into @ProductId
+--- kui tulemuses on veel ridu, siis @@FETCH_STATUS on 0
+while(@@FETCH_STATUS = 0)
+begin
+    declare @ProductName nvarchar(50)
+    select @ProductName = Name from Product where Id = @ProductId
+
+    if(@ProductName = 'Product - 55')
+    begin
+        update ProductSales set UnitPrice = 55 where ProductId = @ProductId
+    end
+
+    else if(@ProductName = 'Product - 65')
+    begin
+        update ProductSales set UnitPrice = 65 where ProductId = @ProductId
+    end
+
+    else if(@ProductName = 'Product - 1000')
+    begin
+        update ProductSales set UnitPrice = 1000 where ProductId = @ProductId
+    end
+
+	fetch next from ProductIdCursor into @ProductId
+end
+
+select * from Product
