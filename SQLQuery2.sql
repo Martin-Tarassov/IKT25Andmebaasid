@@ -1,74 +1,86 @@
---0
-use AdventureWorksLT2019
-select * from SalesLT.Product
 
--- 1
-select count(*) as [Total Customers]
-from SalesLT.Customer
 
--- 2
-select count_big(*) as [Total Orders]
-from SalesLT.SalesOrderHeader
-
--- 3
-select max(TotalDue) as [Order]
-from SalesLT.SalesOrderHeader
-
--- 4
-select min(TotalDue) as [Order]
-from SalesLT.SalesOrderHeader
-
--- 5
-select sum(TotalDue) as [Total Sum]
-from SalesLT.SalesOrderHeader
-
--- 6
-select count(*) as [100] from SalesLT.Product
-where ListPrice > 100
-
--- 7
-select max(ListPrice) as [1000]
+-- Harjutus 1 
+select ProductID, Name, ListPrice, Weight
 from SalesLT.Product
-where ListPrice < 1000
+where ListPrice > 500 and Weight > 500;
 
--- 8
-select min(ListPrice) as [Chiapest Product]
+
+-- Harjutus 2 
+select Product.ProductID, Product.Name
 from SalesLT.Product
-where ListPrice > 0
-
--- 9
-
-select sum(ListPrice) as [Total Price]
-from SalesLT.Product
-where Color is not null
-
--- 10
-select count(*) as [2010] from SalesLT.Customer
-where ModifiedDate > '2010-01-01'
-
--- 11
-select min(ModifiedDate) as [Before 2009] from SalesLT.SalesOrderDetail
-where ModifiedDate < '2009-01-01'
-
--- 12
-select CustomerID, sum(TotalDue) as [Total Orders Sum] from SalesLT.SalesOrderHeader
-group by CustomerID
-order by CustomerID
-
--- 13
-select Customer.CustomerID, Customer.FirstName, Customer.LastName,
-count(SalesOrderHeader.SalesOrderID) as [Total Orders]
-    from SalesLT.Customer
-join SalesLT.SalesOrderHeader on Customer.CustomerID = SalesOrderHeader.CustomerID
-group by Customer.CustomerID, Customer.FirstName, Customer.LastName
-order by Customer.CustomerID
+join SalesLT.ProductCategory on
+Product.ProductCategoryID = ProductCategory.ProductCategoryID
+where ProductCategory.Name in ('Mountain Bikes', 'Road Bikes')
 
 
--- 15
-select Customer.CustomerID, Customer.FirstName, Customer.LastName,
-sum(SalesOrderHeader.TotalDue) as [Total Sum]
-    from SalesLT.Customer
-join SalesLT.SalesOrderHeader on Customer.CustomerID = SalesOrderHeader.CustomerID
-group by Customer.CustomerID, Customer.FirstName, Customer.LastName
-having sum(SalesOrderHeader.TotalDue) > 10000
-order by Customer.CustomerID
+-- Harjutus 3 
+select Name, ListPrice,
+ListPrice * 0.85 AS DiscountPrice
+from SalesLT.Product where ListPrice > 0;
+
+
+-- Harjutus 4 
+select Name, ListPrice,
+ListPrice * 1.22 AS PriceWithVAT
+from SalesLT.Product where ListPrice > 0;
+
+-- Harjutus 5
+create procedure GetProduct @ID int
+as
+select * from SalesLT.Product where ProductID = @ID;
+exec GetProduct 680;
+
+
+-- Harjutus 6
+create procedure GetByCategory @Category nvarchar(100)
+as
+select Product.Name, Product.ListPrice from SalesLT.Product
+join SalesLT.ProductCategory 
+on Product.ProductCategoryID = ProductCategory.ProductCategoryID
+where ProductCategory.Name = @Category;
+exec GetByCategory 'Road Bikes';
+
+
+-- Harjutus 7
+create procedure AddCustomer 
+@FirstName nvarchar(50), 
+@LastName nvarchar(50), 
+@Email nvarchar(100) as
+insert into SalesLT.Customer (FirstName, LastName, EmailAddress)
+values (@FirstName, @LastName, @Email);
+exec AddCustomer 'Billi', 'Butcher', 'billi@email.ee';
+
+-- Harjutus 8
+create table NewProductLog 
+(
+    LogId int identity primary key,
+    ProductId int,
+    ProductName nvarchar(100),
+    InsertDate DateTime default GETDATE()
+);
+
+create trigger trNewProduct
+on SalesLT.Product
+after insert
+as begin
+    insert into NewProductLog (ProductId, ProductName)
+    select ProductID, Name from inserted
+end;
+
+
+-- Harjutus 9 
+create table NewCustomerLog 
+(
+    LogId int identity primary key,
+    CustomerId int,
+    LogDate DateTime default GETDATE()
+);
+
+create trigger NewCustomer
+on SalesLT.Customer
+after insert
+as begin
+    insert into NewCustomerLog (CustomerId)
+    select CustomerID from inserted
+end;
